@@ -1,0 +1,61 @@
+package auth
+
+import androidx.compose.runtime.Composable
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+
+sealed class Screen(val route: String) {
+    object Login : Screen("login")
+    object Register : Screen("register")
+    object ForgotPassword : Screen("forgot_password")
+    object Home : Screen("home")
+}
+
+@Composable
+fun eTripNavHost() {
+    val navController = rememberNavController()
+
+    NavHost(
+        navController = navController,
+        startDestination = if (AuthManager.isUserLoggedIn) Screen.Home.route else Screen.Login.route
+    ) {
+        composable(Screen.Login.route) {
+            LoginScreen(
+                onLoginSuccess = { navController.navigate(Screen.Home.route) },
+                onNavigateToRegister = { navController.navigate(Screen.Register.route) },
+                onNavigateToForgotPassword = { navController.navigate(Screen.ForgotPassword.route) }
+            )
+        }
+
+        composable(Screen.Register.route) {
+            RegisterScreen(
+                onRegisterSuccess = { navController.navigate(Screen.Home.route) },
+                onNavigateToLogin = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.ForgotPassword.route) {
+            ForgotPasswordScreen(
+                onBackToLogin = { navController.popBackStack() },
+                onSuccess = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.Home.route) {
+            HomeScreen(
+                onLogout = {
+                    AuthManager.logout()
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(0)
+                    }
+                }
+            )
+        }
+    }
+}
+
+@Composable
+fun HomeScreen(onLogout: () -> Unit) {
+
+}
