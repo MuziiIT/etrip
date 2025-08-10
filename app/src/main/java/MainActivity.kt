@@ -1,3 +1,5 @@
+package com.example.etrip1
+
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -7,7 +9,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import auth.eTripNavHost
 import com.google.firebase.FirebaseApp
-import ul.eTripTheme
+import ui.eTripTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

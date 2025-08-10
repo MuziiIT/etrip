@@ -1,4 +1,4 @@
-package auth
+package com.example.etrip1.ui.screens
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -26,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import auth.AuthManager
 
 @Composable
 fun RegisterScreen(
@@ -137,10 +138,9 @@ fun RegisterScreen(
             }
         }
         Spacer(modifier = Modifier.height(16.dp))
-        errorMessage?.let { message ->
-
+        if (errorMessage != null) {
             Text(
-                text = message,
+                text = errorMessage!!,
                 color = MaterialTheme.colorScheme.error
             )
         }

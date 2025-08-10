@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.etrip1.ui.screens.RegisterScreen
 
 sealed class Screen(val route: String) {
     object Login : Screen("login")
