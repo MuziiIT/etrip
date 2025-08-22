@@ -12,6 +12,8 @@ import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.*
 import com.example.etrip1.pass.BuyPassScreen
+import com.example.etrip1.triptransfer.PassManager
+import com.example.etrip1.triptransfer.TransferPassScreen
 import com.example.etrip1.ui.screens.RegisterScreen
 
 // Routes for authentication
@@ -91,11 +93,16 @@ fun HomeScreen(onLogout: () -> Unit) {
             modifier = Modifier.padding(innerPadding)
         ) {
             composable(HomeTab.HomeMain.route) { HomeMainContent(onLogout) }
+
             composable(HomeTab.BuyPass.route) {
                 val navController = null
                 BuyPassScreen(navController = navController)
             }
-            composable(HomeTab.Transfer.route) { TransferScreen() }
+            composable(HomeTab.Transfer.route) {
+                val passManager = PassManager() // or get from a ViewModel / DI
+                TransferPassScreen(passManager = passManager)
+            }
+
             composable(HomeTab.History.route) { HistoryScreen() }
             composable(HomeTab.Schedule.route) { ScheduleScreen() }
         }
