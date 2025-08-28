@@ -5,6 +5,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -15,6 +16,7 @@ import com.example.etrip1.pass.BuyPassScreen
 import com.example.etrip1.triptransfer.PassManager
 import com.example.etrip1.triptransfer.TransferPassScreen
 import com.example.etrip1.ui.screens.RegisterScreen
+import viewmodel.UserViewModel
 
 // Routes for authentication
 sealed class Screen(val route: String) {
@@ -33,8 +35,9 @@ sealed class HomeTab(val route: String, val title: String) {
     object Schedule : HomeTab("schedule", "Schedule")
 }
 
+
 @Composable
-fun eTripNavHost() {
+fun eTripNavHost(userViewModel: UserViewModel) {
     val navController = rememberNavController()
 
     NavHost(
@@ -44,7 +47,10 @@ fun eTripNavHost() {
         // LOGIN SCREEN
         composable(Screen.Login.route) {
             LoginScreen(
-                onLoginSuccess = { navController.navigate(Screen.Home.route) { popUpTo(0) } },
+                onLoginSuccess = {
+                    userViewModel.loadUserData()   // 👈 load user after login
+                    navController.navigate(Screen.Home.route) { popUpTo(0) }
+                },
                 onNavigateToRegister = { navController.navigate(Screen.Register.route) },
                 onNavigateToForgotPassword = { navController.navigate(Screen.ForgotPassword.route) }
             )
@@ -53,12 +59,15 @@ fun eTripNavHost() {
         // REGISTER SCREEN
         composable(Screen.Register.route) {
             RegisterScreen(
-                onRegisterSuccess = { navController.navigate(Screen.Home.route) { popUpTo(0) } },
+                onRegisterSuccess = {
+                    userViewModel.loadUserData()   // 👈 load user after registration
+                    navController.navigate(Screen.Home.route) { popUpTo(0) }
+                },
                 onNavigateToLogin = { navController.popBackStack() }
             )
         }
 
-        // FORGOT PASSWORD SCREEN
+        // FORGOT PASSWORD
         composable(Screen.ForgotPassword.route) {
             ForgotPasswordScreen(
                 onBackToLogin = { navController.popBackStack() },
@@ -66,22 +75,23 @@ fun eTripNavHost() {
             )
         }
 
-        // HOME (MAIN APP) WITH BOTTOM NAVIGATION
+        // HOME (AFTER LOGIN)
         composable(Screen.Home.route) {
             HomeScreen(
+                userViewModel = userViewModel,
                 onLogout = {
-                    AuthManager.logout()
-                    navController.navigate(Screen.Login.route) {
-                        popUpTo(0)
+                    AuthManager.logout(userViewModel) {      // ✅ pass the ViewModel and a lambda
+                        navController.navigate(Screen.Login.route) { popUpTo(0) }
                     }
                 }
             )
         }
+
     }
 }
 
 @Composable
-fun HomeScreen(onLogout: () -> Unit) {
+fun HomeScreen(userViewModel: UserViewModel, onLogout: () -> Unit) {
     val homeNavController = rememberNavController()
 
     Scaffold(
@@ -92,7 +102,11 @@ fun HomeScreen(onLogout: () -> Unit) {
             startDestination = HomeTab.HomeMain.route,
             modifier = Modifier.padding(innerPadding)
         ) {
-            composable(HomeTab.HomeMain.route) { HomeMainContent(onLogout) }
+            composable(HomeTab.HomeMain.route) {
+                HomeMainContent(userViewModel, onLogout)
+            }
+
+
 
             composable(HomeTab.BuyPass.route) {
                 val navController = null
@@ -140,14 +154,25 @@ fun BottomNavigationBar(navController: NavHostController) {
 }
 
 @Composable
-fun HomeMainContent(onLogout: () -> Unit) {
+fun HomeMainContent(userViewModel: UserViewModel, onLogout: () -> Unit) {
+    val userState by userViewModel.user.collectAsState()
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp),
         horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally
     ) {
-        Text(text = "Welcome to eTrip Home", style = MaterialTheme.typography.headlineMedium)
+        if (userState != null) {
+            Text(
+                text = "Welcome, ${userState!!.name}",
+                style = MaterialTheme.typography.headlineMedium
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(text = "Trips left: ${userState!!.tripsLeft}")
+        } else {
+            Text(text = "Loading user...")
+        }
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -156,6 +181,7 @@ fun HomeMainContent(onLogout: () -> Unit) {
         }
     }
 }
+
 
 // Placeholder screens
 @Composable fun BuyPassScreen() { Text("Buy Pass Screen") }

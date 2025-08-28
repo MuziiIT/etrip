@@ -30,6 +30,7 @@ fun BuyPassScreen(navController: NavController? = null, passViewModel: PassViewM
                     onUrlReady = { paymentUrl ->
                         val intent = Intent(context, PayFastWebViewActivity::class.java)
                         intent.putExtra("url", paymentUrl)
+                        intent.putExtra("passType", "daily") // <-- Added
                         context.startActivity(intent)
                     },
                     onError = { error ->
@@ -53,6 +54,7 @@ fun BuyPassScreen(navController: NavController? = null, passViewModel: PassViewM
                     onUrlReady = { paymentUrl ->
                         val intent = Intent(context, PayFastWebViewActivity::class.java)
                         intent.putExtra("url", paymentUrl)
+                        intent.putExtra("passType", "weekly") // <-- Added
                         context.startActivity(intent)
                     },
                     onError = { error ->
@@ -63,6 +65,30 @@ fun BuyPassScreen(navController: NavController? = null, passViewModel: PassViewM
             modifier = Modifier.fillMaxWidth()
         ) {
             Text("Buy Weekly Pass")
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Button(
+            onClick = {
+                passViewModel.startPayment(
+                    context,
+                    amount = 100.0,
+                    passType = "monthly",
+                    onUrlReady = { paymentUrl ->
+                        val intent = Intent(context, PayFastWebViewActivity::class.java)
+                        intent.putExtra("url", paymentUrl)
+                        intent.putExtra("passType", "monthlyy") // <-- Added
+                        context.startActivity(intent)
+                    },
+                    onError = { error ->
+                        Toast.makeText(context, error, Toast.LENGTH_LONG).show()
+                    }
+                )
+            },
+            modifier = Modifier.fillMaxWidth()
+        )  {
+            Text("Buy Monthly Pass")
         }
     }
 }

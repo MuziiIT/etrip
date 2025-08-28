@@ -2,9 +2,13 @@ package auth
 
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.UserProfileChangeRequest
+import com.google.firebase.firestore.FirebaseFirestore
+import viewmodel.UserViewModel
+
 
 object AuthManager {
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
+    private val db: FirebaseFirestore = FirebaseFirestore.getInstance()
 
     val currentUser get() = auth.currentUser
     val isUserLoggedIn get() = currentUser != null
@@ -29,34 +33,53 @@ object AuthManager {
         email: String,
         password: String,
         fullName: String,
+        phone: String = "",
         onSuccess: () -> Unit,
         onError: (String) -> Unit
     ) {
         auth.createUserWithEmailAndPassword(email, password)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
-                    // Update user profile with display name
-                    val profileUpdates = UserProfileChangeRequest.Builder()
-                        .setDisplayName(fullName)
-                        .build()
+                    val firebaseUser = currentUser
+                    firebaseUser?.let { user ->
+                        // Update Auth profile
+                        val profileUpdates = UserProfileChangeRequest.Builder()
+                            .setDisplayName(fullName)
+                            .build()
 
-                    currentUser?.updateProfile(profileUpdates)
-                        ?.addOnCompleteListener { profileTask ->
-                            if (profileTask.isSuccessful) {
+                        user.updateProfile(profileUpdates)
+
+                        // Save user details in Firestore
+                        val userData = hashMapOf(
+                            "userid" to user.uid,
+                            "name" to fullName,
+                            "email" to email,
+                            "phone" to phone,
+
+                        )
+
+                        db.collection("users").document(user.uid)
+                            .set(userData)
+                            .addOnSuccessListener {
                                 onSuccess()
-                            } else {
-                                onError(profileTask.exception?.message ?: "Profile update failed")
                             }
-                        }
+                            .addOnFailureListener { e ->
+                                onError(e.message ?: "Failed to save user in Firestore")
+                            }
+                    }
                 } else {
                     onError(task.exception?.message ?: "Registration failed")
                 }
             }
     }
 
-    fun logout() {
-        auth.signOut()
+    // AuthManager.kt
+    fun logout(userViewModel: UserViewModel, onLoggedOut: () -> Unit) {
+        auth.signOut()                // Firebase sign out
+        userViewModel.clearUser()     // Clear ViewModel user data
+        onLoggedOut()                 // Navigate back to login
     }
+
 
     fun resetPassword(
         email: String,

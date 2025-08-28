@@ -1,31 +1,54 @@
 package com.example.etrip1.pass
 
 import android.os.Bundle
+import android.util.Log
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.widget.Toast
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 
 class PayFastWebViewActivity : AppCompatActivity() {
+
+    private val passViewModel: PassViewModel by viewModels()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val webView = WebView(this)
         setContentView(webView)
+
+        val passType = intent.getStringExtra("passType") ?: ""
+        val userId = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid
 
         webView.settings.javaScriptEnabled = true
 
         webView.webViewClient = object : WebViewClient() {
             override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
                 val url = request?.url.toString()
+                Log.d("PAYFAST", "Redirected to: $url")
 
-                // ✅ Detect success/cancel (these must match your PayFast RETURN_URL + CANCEL_URL)
-                if (url.contains("success")) {
-                    finish() // Close WebView after success
-                } else if (url.contains("cancel")) {
-                    finish()
+                when {
+                    url.contains("success", ignoreCase = true) -> {
+                        Toast.makeText(this@PayFastWebViewActivity, "Payment Successful!", Toast.LENGTH_LONG).show()
+
+                        // ✅ Update Firestore after success
+                        if (userId != null && passType.isNotEmpty()) {
+                            passViewModel.assignPassAfterPayment(userId, passType)
+                        }
+
+                        finish() // Close WebView
+                        return true
+                    }
+
+                    url.contains("cancel", ignoreCase = true) -> {
+                        Toast.makeText(this@PayFastWebViewActivity, "Payment Cancelled", Toast.LENGTH_LONG).show()
+                        finish()
+                        return true
+                    }
                 }
 
-                return false // Load inside WebView
+                return false // Allow WebView to load normally
             }
         }
 
