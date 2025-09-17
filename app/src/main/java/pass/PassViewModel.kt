@@ -42,29 +42,40 @@ class PassViewModel : ViewModel() {
 
     fun assignPassToUser(userId: String, passType: String) {
         val db = FirebaseFirestore.getInstance()
-        val userRef = db.collection("users").document(userId)
+        val passesCollection = db.collection("users").document(userId).collection("passes")
 
-        // Run Firestore write async, not on UI thread
-        val (expiry, trips) = when (passType) {
-            "daily" -> Pair(System.currentTimeMillis() + 24 * 60 * 60 * 1000, 1)
-            "weekly" -> Pair(System.currentTimeMillis() + 7 * 24 * 60 * 60 * 1000, 7)
-            "monthly" -> Pair(System.currentTimeMillis() + 30 * 24 * 60 * 60 * 1000, 30)
-            else -> Pair(System.currentTimeMillis(), 0)
+        val expiry = when (passType) {
+            "daily" -> System.currentTimeMillis() + 24 * 60 * 60 * 1000
+            "weekly" -> System.currentTimeMillis() + 7 * 24 * 60 * 60 * 1000
+            "monthly" -> System.currentTimeMillis() + 30 * 24 * 60 * 60 * 1000
+            else -> System.currentTimeMillis()
         }
 
-        val updates = mapOf(
-            "current_Pass" to passType,
-            "passExpiry" to expiry,
-            "tripsLeft" to trips
+        val trips = when (passType) {
+            "daily" -> 3
+            "weekly" -> 15
+            "monthly" -> 60
+            else -> 0
+        }
+
+        val newPass = hashMapOf(
+            "type" to passType,
+            "purchasedAt" to System.currentTimeMillis(),
+            "validUntil" to expiry,
+            "tripsRemaining" to trips
         )
 
-        userRef.update(updates)
+        // Save under a fixed doc name like "daily pass", "weekly pass"
+        passesCollection.document("$passType pass")
+            .set(newPass)
             .addOnSuccessListener {
-                Log.d("PASS_UPDATE", "Pass assigned successfully for $userId: $passType")
+                Log.d("PASS_UPDATE", "Pass assigned: $passType for user: $userId")
             }
             .addOnFailureListener { e ->
                 Log.e("PASS_UPDATE", "Error assigning pass", e)
             }
     }
+
+
 
 }
