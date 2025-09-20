@@ -11,11 +11,13 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.etrip1.notification.NotificationService
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -23,6 +25,7 @@ import kotlinx.coroutines.launch
 fun TransferPassScreen(viewModel: TripTransferViewModel = viewModel()) {
     val coroutineScope = rememberCoroutineScope()
     val focusManager = LocalFocusManager.current
+    val context = LocalContext.current   // ✅ store context once
 
     val availablePasses by viewModel.availablePasses.collectAsState()
     val transferStatus by viewModel.transferStatus.collectAsState()
@@ -30,7 +33,7 @@ fun TransferPassScreen(viewModel: TripTransferViewModel = viewModel()) {
 
     // keep UI state with rememberSaveable so it's preserved on rotation
     var selectedPass by rememberSaveable { mutableStateOf<String?>(null) } // store passId
-    var selectedPassObj by remember { mutableStateOf<TravelPass?>(null) } // keep object for display
+    var selectedPassObj by remember { mutableStateOf<TravelPass?>(null) }  // keep object for display
     var dropdownExpanded by rememberSaveable { mutableStateOf(false) }
     var recipient by rememberSaveable { mutableStateOf("") }
     var tripsToTransfer by rememberSaveable { mutableStateOf("1") }
@@ -81,10 +84,10 @@ fun TransferPassScreen(viewModel: TripTransferViewModel = viewModel()) {
                         ) {
                             Column {
                                 Text(pass.type, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                                // optional: show expiry
                                 if (pass.validUntil > 0L) {
-                                    val daysLeft = ((pass.validUntil - System.currentTimeMillis()) / (1000 * 60 * 60 * 24)).coerceAtLeast(0)
-                                    Text("${daysLeft} days left", style = MaterialTheme.typography.bodySmall)
+                                    val daysLeft = ((pass.validUntil - System.currentTimeMillis()) /
+                                            (1000 * 60 * 60 * 24)).coerceAtLeast(0)
+                                    Text("$daysLeft days left", style = MaterialTheme.typography.bodySmall)
                                 }
                             }
                             Text("${pass.tripsRemaining} trips", fontSize = 16.sp, fontWeight = FontWeight.Bold)
@@ -157,8 +160,19 @@ fun TransferPassScreen(viewModel: TripTransferViewModel = viewModel()) {
             onClick = {
                 focusManager.clearFocus(true)
                 showConfirmDialog = true
+
+                // 🚀 Show notification immediately when button clicked
+               /* NotificationService.showNotification(
+                    context = context,
+                    title = "Trip Transferred",
+                    message = "Your trip has been successfully transferred."
+                ) */
+
+
             },
-            enabled = recipient.isNotBlank() && selectedPassObj != null && tripsToTransfer.toIntOrNull()?.let { it > 0 && it <= (selectedPassObj?.tripsRemaining ?: 0) } == true && !isSubmitting,
+            enabled = recipient.isNotBlank() && selectedPassObj != null &&
+                    tripsToTransfer.toIntOrNull()?.let { it > 0 && it <= (selectedPassObj?.tripsRemaining ?: 0) } == true &&
+                    !isSubmitting,
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF9800))
         ) {
             if (isSubmitting) {
@@ -180,35 +194,56 @@ fun TransferPassScreen(viewModel: TripTransferViewModel = viewModel()) {
         }
     }
 
-    // Confirm Transfer Dialog
+
+    // ✅ Confirm Transfer Dialog
     if (showConfirmDialog && selectedPassObj != null) {
         val tripsInt = tripsToTransfer.toIntOrNull() ?: 0
         AlertDialog(
             onDismissRequest = { showConfirmDialog = false },
             title = { Text("Confirm Transfer", fontWeight = FontWeight.Bold) },
-            text = {
-                Text("Transfer $tripsInt trips from ${selectedPassObj!!.type} to $recipient?")
-            },
+            text = { Text("Transfer $tripsInt trips from ${selectedPassObj!!.type} to $recipient?") },
             confirmButton = {
                 TextButton(onClick = {
                     showConfirmDialog = false
-                    // call ViewModel's createTransfer (sender-write-only — avoids permission errors)
                     coroutineScope.launch {
+                        // Perform the transfer
                         viewModel.createTransfer(
                             recipientId = recipient.trim(),
                             passId = selectedPassObj!!.id,
                             trips = tripsInt
+                        )
+
+                        // 🚀 Show notification immediately after transfer
+                        NotificationService.showNotification(
+                            context = context,
+                            title = "Trip Transferred",
+                            message = "Your trip is successfully transferred."
                         )
                     }
                 }) {
                     Text("Confirm")
                 }
             },
+
             dismissButton = {
-                TextButton(onClick = { showConfirmDialog = false }) {
+                TextButton(onClick = {
+
+                    //show notification
+
+                    NotificationService.showNotification(
+                        context = context,
+                        title = "Trip Transfer Cancelled",
+                        message = "Your trip has is not transferred."
+                    )
+                    showConfirmDialog = false
+                }) {
                     Text("Cancel")
                 }
+
             }
         )
     }
+
+
+
 }
