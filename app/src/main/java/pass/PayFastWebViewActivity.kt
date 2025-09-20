@@ -8,6 +8,7 @@ import android.webkit.WebViewClient
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import com.example.etrip1.notification.NotificationService  // <--- matches package above
 
 class PayFastWebViewActivity : AppCompatActivity() {
 
@@ -32,23 +33,35 @@ class PayFastWebViewActivity : AppCompatActivity() {
                     url.contains("success", ignoreCase = true) -> {
                         Toast.makeText(this@PayFastWebViewActivity, "Payment Successful!", Toast.LENGTH_LONG).show()
 
-                        // ✅ Update Firestore after success
                         if (userId != null && passType.isNotEmpty()) {
                             passViewModel.assignPassAfterPayment(userId, passType)
                         }
-
-                        finish() // Close WebView
+                        // allows the Notification to work and display as a push Notification
+                        NotificationService.showNotification(
+                            this@PayFastWebViewActivity,
+                            "Purchase Successful",
+                            "Your $passType pass has been activated."
+                        )
+                        finish()
                         return true
                     }
 
                     url.contains("cancel", ignoreCase = true) -> {
                         Toast.makeText(this@PayFastWebViewActivity, "Payment Cancelled", Toast.LENGTH_LONG).show()
+
+                        // allows the Notification to work and display as a push Notification
+
+                        NotificationService.showNotification(
+                            this@PayFastWebViewActivity,
+                            "Purchase Cancelled",
+                            "Your $passType payment was cancelled."
+                        )
                         finish()
                         return true
                     }
                 }
 
-                return false // Allow WebView to load normally
+                return false
             }
         }
 
