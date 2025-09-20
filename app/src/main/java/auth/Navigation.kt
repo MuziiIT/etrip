@@ -1,16 +1,20 @@
 package auth
 
+import android.app.Activity
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.*
+import com.example.etrip1.notification.NotificationHelper
 import com.example.etrip1.pass.BuyPassScreen
 import com.example.etrip1.triptransfer.TransferPassScreen
 import com.example.etrip1.ui.screens.RegisterScreen
@@ -38,6 +42,13 @@ sealed class HomeTab(val route: String, val title: String) {
 @Composable
 fun eTripNavHost(userViewModel: UserViewModel) {
     val navController = rememberNavController()
+
+    // 👇 NEW: Request notification permission once user reaches Home
+    val context = LocalContext.current
+    val activity = context as? Activity
+    LaunchedEffect(Unit) {
+        activity?.let { NotificationHelper.requestPermission(it) }
+    }
 
     NavHost(
         navController = navController,
