@@ -13,6 +13,7 @@ import com.example.etrip1.notification.NotificationService  // <--- matches pack
 class PayFastWebViewActivity : AppCompatActivity() {
 
     private val passViewModel: PassViewModel by viewModels()
+    private var notificationShown = false  //  Prevents duplicate notifications
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -31,32 +32,38 @@ class PayFastWebViewActivity : AppCompatActivity() {
 
                 when {
                     url.contains("success", ignoreCase = true) -> {
-                        Toast.makeText(this@PayFastWebViewActivity, "Payment Successful!", Toast.LENGTH_LONG).show()
+                        if (!notificationShown) {
+                            notificationShown = true  //  Mark as handled
 
-                        if (userId != null && passType.isNotEmpty()) {
-                            passViewModel.assignPassAfterPayment(userId, passType)
+                            Toast.makeText(this@PayFastWebViewActivity, "Payment Successful!", Toast.LENGTH_LONG).show()
+
+                            if (userId != null && passType.isNotEmpty()) {
+                                passViewModel.assignPassAfterPayment(userId, passType)
+                            }
+
+                            NotificationService.showNotification(
+                                this@PayFastWebViewActivity,
+                                "Purchase Successful",
+                                "Your $passType pass has been activated."
+                            )
+                            finish()
                         }
-                        // allows the Notification to work and display as a push Notification
-                        NotificationService.showNotification(
-                            this@PayFastWebViewActivity,
-                            "Purchase Successful",
-                            "Your $passType pass has been activated."
-                        )
-                        finish()
                         return true
                     }
 
                     url.contains("cancel", ignoreCase = true) -> {
-                        Toast.makeText(this@PayFastWebViewActivity, "Payment Cancelled", Toast.LENGTH_LONG).show()
+                        if (!notificationShown) {
+                            notificationShown = true  //  Mark as handled
 
-                        // allows the Notification to work and display as a push Notification
+                            Toast.makeText(this@PayFastWebViewActivity, "Payment Cancelled", Toast.LENGTH_LONG).show()
 
-                        NotificationService.showNotification(
-                            this@PayFastWebViewActivity,
-                            "Purchase Cancelled",
-                            "Your $passType payment was cancelled."
-                        )
-                        finish()
+                            NotificationService.showNotification(
+                                this@PayFastWebViewActivity,
+                                "Purchase Cancelled",
+                                "Your $passType payment was cancelled."
+                            )
+                            finish()
+                        }
                         return true
                     }
                 }
@@ -69,3 +76,4 @@ class PayFastWebViewActivity : AppCompatActivity() {
         webView.loadUrl(paymentUrl)
     }
 }
+
