@@ -233,7 +233,7 @@ fun TransferPassScreen(viewModel: TripTransferViewModel = viewModel()) {
                     NotificationService.showNotification(
                         context = context,
                         title = "Trip Transfer Cancelled",
-                        message = "Your trip has is not transferred."
+                        message = "Your trip  is not transferred."
                     )
                     showConfirmDialog = false
                 }) {
