@@ -11,7 +11,7 @@ import com.journeyapps.barcodescanner.BarcodeEncoder
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import java.util.*
+import java.util.Date
 
 // Data class for Pass
 data class Pass(

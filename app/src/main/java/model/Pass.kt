@@ -1,7 +1,5 @@
 package com.example.etrip1.model
 
-import java.util.Date
-
 // Pass.kt
 /*
 data class Pass(

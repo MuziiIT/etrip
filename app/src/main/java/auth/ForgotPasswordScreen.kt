@@ -1,4 +1,3 @@
-
 package auth
 
 import androidx.compose.foundation.layout.Arrangement
@@ -25,6 +24,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.example.etrip1.auth.AuthManager
 
 @Composable
 fun ForgotPasswordScreen(
@@ -75,6 +75,7 @@ fun ForgotPasswordScreen(
                     onSuccess = {
                         isLoading = false
                         successMessage = "Password reset email sent. Please check your inbox."
+                        onSuccess() // ✅ call success callback too
                     },
                     onError = {
                         isLoading = false

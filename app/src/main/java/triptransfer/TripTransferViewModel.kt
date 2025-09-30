@@ -14,10 +14,8 @@ import kotlinx.coroutines.tasks.await
 /**
  * ViewModel that:
  *  - listens to the current user's passes (availablePasses)
+ *  - exposes the current user's UID (currentUserId)
  *  - allows the current user to create a transfer request (createTransfer)
- *
- * Note: createTransfer writes to /users/{senderId}/transfers (allowed by your rules).
- * Do NOT write to recipient passes from the client unless your rules allow it.
  */
 class TripTransferViewModel : ViewModel() {
     private val auth = FirebaseAuth.getInstance()
@@ -31,6 +29,9 @@ class TripTransferViewModel : ViewModel() {
 
     private val _isSubmitting = MutableStateFlow(false)
     val isSubmitting: StateFlow<Boolean> = _isSubmitting
+
+    private val _currentUserId = MutableStateFlow(auth.currentUser?.uid ?: "")
+    val currentUserId: StateFlow<String> = _currentUserId
 
     init {
         loadUserPasses()
@@ -48,7 +49,6 @@ class TripTransferViewModel : ViewModel() {
                 }
 
                 val passes = snapshot?.documents?.mapNotNull { doc ->
-                    // manual mapping to avoid timestamp/Date conversion surprises
                     val id = doc.id
                     val type = doc.getString("type") ?: ""
                     val trips = doc.getLong("tripsRemaining")?.toInt() ?: 0
@@ -60,12 +60,6 @@ class TripTransferViewModel : ViewModel() {
             }
     }
 
-    /**
-     * Create a transfer request under the sender's transfers subcollection.
-     *
-     * This write is permitted by your security rules (sender writes into their own transfers).
-     * recipientId must be the recipient UID (not email) unless you implement an email->uid lookup that your rules permit.
-     */
     fun createTransfer(recipientId: String, passId: String, trips: Int) {
         val senderId = auth.currentUser?.uid ?: run {
             _transferStatus.value = "Not logged in"
@@ -80,7 +74,6 @@ class TripTransferViewModel : ViewModel() {
         _isSubmitting.value = true
         _transferStatus.value = null
 
-        // Create log of transfer
         val transferRef = firestore.collection("users")
             .document(senderId)
             .collection("transfers")
@@ -97,10 +90,9 @@ class TripTransferViewModel : ViewModel() {
 
         transferRef.set(transferData)
             .addOnSuccessListener {
-                // Execute the actual transfer immediately
                 viewModelScope.launch {
                     try {
-                        transferPass(recipientId, passId, trips)  // ✅ now calls the renamed function
+                        transferPass(recipientId, passId, trips)
                         transferRef.update("status", "completed")
                         _transferStatus.value = "Transfer successful!"
                     } catch (e: Exception) {
@@ -116,12 +108,6 @@ class TripTransferViewModel : ViewModel() {
             }
     }
 
-    /**
-     * Optional helper: if you ever need an immediate client-side transfer (not recommended unless rules permit),
-     * keep this but be aware it will attempt cross-user writes and will be blocked by your strict rules.
-     *
-     * I left it commented as a reference — prefer the createTransfer + acceptTransfer server-side flow.
-     */
     @Suppress("unused")
     fun transferPass(
         recipientId: String,
@@ -151,21 +137,19 @@ class TripTransferViewModel : ViewModel() {
                         throw Exception("Not enough trips")
                     }
 
-                    // ✅ Deduct from sender
                     transaction.update(
                         senderPassRef,
                         "tripsRemaining",
                         currentTrips - tripsToTransfer
                     )
 
-                    // ✅ Add to recipient, include senderId so rules allow it
                     transaction.set(
                         recipientPassRef,
                         mapOf(
                             "id" to passId,
                             "type" to type,
                             "tripsRemaining" to FieldValue.increment(tripsToTransfer.toLong()),
-                            "senderId" to senderId, // 👈 crucial for rules
+                            "senderId" to senderId,
                             "timestamp" to System.currentTimeMillis()
                         ),
                         SetOptions.merge()
@@ -178,6 +162,4 @@ class TripTransferViewModel : ViewModel() {
             }
         }
     }
-
-    }
-
+}

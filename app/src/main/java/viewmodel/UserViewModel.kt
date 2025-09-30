@@ -6,6 +6,9 @@ import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import model.User
+import java.text.SimpleDateFormat
+import java.util.*
+import java.util.concurrent.TimeUnit
 
 class UserViewModel : ViewModel() {
 
@@ -23,6 +26,13 @@ class UserViewModel : ViewModel() {
 
     private val _activePassType = MutableStateFlow<String?>(null)
     val activePassType: StateFlow<String?> get() = _activePassType
+
+    // ✅ New fields for expiry
+    private val _passExpiry = MutableStateFlow<String?>(null)
+    val passExpiry: StateFlow<String?> = _passExpiry
+
+    private val _daysRemaining = MutableStateFlow<Int?>(null)
+    val daysRemaining: StateFlow<Int?> = _daysRemaining
 
     init {
         if (auth.currentUser != null) {
@@ -73,14 +83,12 @@ class UserViewModel : ViewModel() {
                         val type = doc.getString("type")
 
                         if (validUntil > now) {
-                            // ✅ Still valid: check if it should be the active one
                             if (validUntil > latestExpiry) {
                                 latestExpiry = validUntil
                                 activeTrips = trips
                                 activeType = type
                             }
                         } else {
-                            // ❌ Expired: delete from Firestore
                             doc.reference.delete()
                                 .addOnSuccessListener {
                                     println("Expired pass '${doc.id}' deleted for user $uid")
@@ -94,6 +102,19 @@ class UserViewModel : ViewModel() {
 
                 _tripsRemaining.value = activeTrips
                 _activePassType.value = activeType
+
+                if (latestExpiry > 0) {
+                    val expiryDate = Date(latestExpiry)
+                    val formatter = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                    _passExpiry.value = formatter.format(expiryDate)
+
+                    val diffMillis = latestExpiry - now
+                    val diffDays = TimeUnit.MILLISECONDS.toDays(diffMillis).toInt()
+                    _daysRemaining.value = diffDays
+                } else {
+                    _passExpiry.value = null
+                    _daysRemaining.value = null
+                }
             }
     }
 
@@ -101,5 +122,7 @@ class UserViewModel : ViewModel() {
         _user.value = null
         _tripsRemaining.value = null
         _activePassType.value = null
+        _passExpiry.value = null
+        _daysRemaining.value = null
     }
 }
