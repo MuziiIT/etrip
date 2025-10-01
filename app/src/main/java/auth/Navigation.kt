@@ -1,5 +1,6 @@
 package com.example.etrip1.auth
 
+import android.app.Activity
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
@@ -13,6 +14,7 @@ import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -22,6 +24,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -32,6 +35,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import auth.ForgotPasswordScreen
 import com.example.etrip1.R
+import com.example.etrip1.notification.NotificationHelper
 import com.example.etrip1.pass.BuyPassScreen
 import com.example.etrip1.qrcode.QrCodeScreen
 import com.example.etrip1.schedules.ScheduleScreen
@@ -60,6 +64,13 @@ sealed class HomeTab(val route: String, val title: String) {
 @Composable
 fun eTripNavHost(userViewModel: UserViewModel) {
     val navController = rememberNavController()
+// 👇 NEW: Request notification permission once user reaches Home
+    val context = LocalContext.current
+    val activity = context as? Activity
+    LaunchedEffect(Unit) {
+        activity?.let { NotificationHelper.requestPermission(it) }
+    }
+
     NavHost(
         navController = navController,
         startDestination = if (AuthManager.isUserLoggedIn) Screen.Home.route else Screen.Login.route

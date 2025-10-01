@@ -1,0 +1,67 @@
+{
+  "project_info": {
+    "project_number": "567439534877",
+    "project_id": "etrip-382f1",
+    "storage_bucket": "etrip-382f1.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:567439534877:android:4ae51ffc4c6b4e880bcff4",
+        "android_client_info": {
+          "package_name": "com.etrip.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBhUPJjKGw-LkB3E17ZBwqSrkEUcGVcCVk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:567439534877:android:6181d1b80041fa7d0bcff4",
+        "android_client_info": {
+          "package_name": "com.example.etrip"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBhUPJjKGw-LkB3E17ZBwqSrkEUcGVcCVk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:567439534877:android:989a0cf14adda6270bcff4",
+        "android_client_info": {
+          "package_name": "com.example.etrip1"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBhUPJjKGw-LkB3E17ZBwqSrkEUcGVcCVk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

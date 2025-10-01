@@ -19,6 +19,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
@@ -28,6 +29,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.launch
 import com.example.etrip1.R
+import com.example.etrip1.notification.NotificationService
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -49,6 +51,7 @@ fun TransferPassScreen(viewModel: TripTransferViewModel = viewModel()) {
     var showConfirmDialog by rememberSaveable { mutableStateOf(false) }
 
     val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current   // ✅ store context once
 
     LaunchedEffect(availablePasses, selectedPass) {
         selectedPassObj = availablePasses.find { it.id == selectedPass }
@@ -351,13 +354,32 @@ fun TransferPassScreen(viewModel: TripTransferViewModel = viewModel()) {
                             passId = selectedPassObj!!.id,
                             trips = tripsInt
                         )
+
+                        // 🚀 Show notification immediately after transfer
+                        NotificationService.showNotification(
+                            context = context,
+                            title = "Trip Transferred",
+                            message = "Your trip is successfully transferred."
+                        )
+
                     }
                 }) {
                     Text("Confirm")
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showConfirmDialog = false }) {
+                TextButton(onClick = {
+//show notification
+
+                    NotificationService.showNotification(
+                        context = context,
+                        title = "Trip Transfer Cancelled",
+                        message = "Your trip  is not transferred."
+                    )
+
+                    showConfirmDialog = false })
+
+                {
                     Text("Cancel")
                 }
             }
