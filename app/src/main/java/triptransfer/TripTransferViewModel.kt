@@ -11,12 +11,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
-/**
- * ViewModel that:
- *  - listens to the current user's passes (availablePasses)
- *  - exposes the current user's UID (currentUserId)
- *  - allows the current user to create a transfer request (createTransfer)
- */
 class TripTransferViewModel : ViewModel() {
     private val auth = FirebaseAuth.getInstance()
     private val firestore = FirebaseFirestore.getInstance()
@@ -95,6 +89,10 @@ class TripTransferViewModel : ViewModel() {
                         transferPass(recipientId, passId, trips)
                         transferRef.update("status", "completed")
                         _transferStatus.value = "Transfer successful!"
+
+                        // ✅ Log history for both sender & recipient
+                        logTransferHistory(senderId, recipientId, passId, trips)
+
                     } catch (e: Exception) {
                         transferRef.update("status", "failed")
                         _transferStatus.value = "Transfer failed: ${e.message}"
@@ -108,7 +106,6 @@ class TripTransferViewModel : ViewModel() {
             }
     }
 
-    @Suppress("unused")
     fun transferPass(
         recipientId: String,
         passId: String,
@@ -161,5 +158,35 @@ class TripTransferViewModel : ViewModel() {
                 _transferStatus.value = "Transfer failed: ${e.message}"
             }
         }
+    }
+
+    /** ✅ Helper to log transfer events into users/{id}/history */
+    private fun logTransferHistory(senderId: String, recipientId: String, passId: String, trips: Int) {
+        val db = FirebaseFirestore.getInstance()
+        val timestamp = System.currentTimeMillis()
+
+        val senderHistory = mapOf(
+            "type" to "transfer",
+            "action" to "sent",
+            "recipientId" to recipientId,
+            "passId" to passId,
+            "tripsTransferred" to trips,
+            "timestamp" to timestamp
+        )
+
+        val recipientHistory = mapOf(
+            "type" to "transfer",
+            "action" to "received",
+            "senderId" to senderId,
+            "passId" to passId,
+            "tripsTransferred" to trips,
+            "timestamp" to timestamp
+        )
+
+        db.collection("users").document(senderId)
+            .collection("history").add(senderHistory)
+
+        db.collection("users").document(recipientId)
+            .collection("history").add(recipientHistory)
     }
 }

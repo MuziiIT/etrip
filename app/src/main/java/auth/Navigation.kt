@@ -35,6 +35,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import auth.ForgotPasswordScreen
 import com.example.etrip1.R
+import com.example.etrip1.history.UserHistoryScreen
 import com.example.etrip1.notification.NotificationHelper
 import com.example.etrip1.pass.BuyPassScreen
 import com.example.etrip1.qrcode.QrCodeScreen
@@ -128,7 +129,7 @@ fun HomeScreen(userViewModel: UserViewModel, onLogout: () -> Unit) {
             composable(HomeTab.HomeMain.route) { HomeMainContent(userViewModel, onLogout, homeNavController) }
             composable(HomeTab.BuyPass.route) { BuyPassScreen(navController = homeNavController) }
             composable(HomeTab.Transfer.route) { TransferPassScreen() }
-            composable(HomeTab.History.route) { HistoryScreen() }
+            composable(HomeTab.History.route) { UserHistoryScreen() }
             composable(HomeTab.Schedule.route) { ScheduleScreen() }   // ✅ using the real one
             composable(HomeTab.QrCode.route) { QrCodeScreen() }
         }

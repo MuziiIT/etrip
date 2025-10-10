@@ -74,6 +74,7 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.appcompat)
     implementation(libs.volley)
+    implementation(libs.ui)
 
 
     testImplementation(libs.junit)
@@ -89,4 +90,7 @@ dependencies {
     implementation ("com.google.accompanist:accompanist-permissions:0.35.1-alpha")
 
     // your other dependencies...
+    //ICONS
+    implementation("androidx.compose.material:material-icons-extended:1.7.0")
+
 }

@@ -1,5 +1,7 @@
 package com.example.etrip1.triptransfer
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -7,6 +9,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
 import androidx.compose.material3.TextFieldDefaults.outlinedTextFieldColors
 import androidx.compose.runtime.*
@@ -27,9 +31,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import kotlinx.coroutines.launch
 import com.example.etrip1.R
 import com.example.etrip1.notification.NotificationService
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -37,6 +41,7 @@ fun TransferPassScreen(viewModel: TripTransferViewModel = viewModel()) {
     val coroutineScope = rememberCoroutineScope()
     val focusManager = LocalFocusManager.current
     val clipboardManager = LocalClipboardManager.current
+    val context = LocalContext.current
 
     val availablePasses by viewModel.availablePasses.collectAsState()
     val transferStatus by viewModel.transferStatus.collectAsState()
@@ -49,9 +54,9 @@ fun TransferPassScreen(viewModel: TripTransferViewModel = viewModel()) {
     var recipient by rememberSaveable { mutableStateOf("") }
     var tripsToTransfer by rememberSaveable { mutableStateOf("1") }
     var showConfirmDialog by rememberSaveable { mutableStateOf(false) }
+    var showShareSheet by remember { mutableStateOf(false) }
 
     val snackbarHostState = remember { SnackbarHostState() }
-    val context = LocalContext.current   // ✅ store context once
 
     LaunchedEffect(availablePasses, selectedPass) {
         selectedPassObj = availablePasses.find { it.id == selectedPass }
@@ -79,7 +84,7 @@ fun TransferPassScreen(viewModel: TripTransferViewModel = viewModel()) {
                     .align(Alignment.Start)
             )
 
-            // 🔹 User ID with copy
+            // 🔹 User ID + Share button
             if (currentUserId.isNotBlank()) {
                 Row(
                     modifier = Modifier
@@ -96,19 +101,19 @@ fun TransferPassScreen(viewModel: TripTransferViewModel = viewModel()) {
                             color = Color.Gray
                         )
                     }
-                    TextButton(onClick = {
-                        clipboardManager.setText(AnnotatedString(currentUserId))
-                        coroutineScope.launch {
-                            snackbarHostState.showSnackbar("User ID copied!")
-                        }
-                    }) {
-                        Text("Copy")
+
+                    IconButton(onClick = { showShareSheet = true }) {
+                        Icon(
+                            imageVector = Icons.Default.Share,
+                            contentDescription = "Share UID",
+                            tint = Color(0xFF1565C0)
+                        )
                     }
                 }
                 Spacer(modifier = Modifier.height(16.dp))
             }
 
-            // 🔹 Available Passes (modern cards kept!)
+            // 🔹 Available Passes
             Text(
                 text = "Available Passes",
                 style = MaterialTheme.typography.titleMedium.copy(
@@ -155,7 +160,6 @@ fun TransferPassScreen(viewModel: TripTransferViewModel = viewModel()) {
                                         )
                                     )
                             ) {
-                                // 🔸 Orange side bar
                                 Box(
                                     modifier = Modifier
                                         .fillMaxHeight()
@@ -355,13 +359,11 @@ fun TransferPassScreen(viewModel: TripTransferViewModel = viewModel()) {
                             trips = tripsInt
                         )
 
-                        // 🚀 Show notification immediately after transfer
                         NotificationService.showNotification(
                             context = context,
                             title = "Trip Transferred",
                             message = "Your trip is successfully transferred."
                         )
-
                     }
                 }) {
                     Text("Confirm")
@@ -369,20 +371,112 @@ fun TransferPassScreen(viewModel: TripTransferViewModel = viewModel()) {
             },
             dismissButton = {
                 TextButton(onClick = {
-//show notification
-
                     NotificationService.showNotification(
                         context = context,
                         title = "Trip Transfer Cancelled",
-                        message = "Your trip  is not transferred."
+                        message = "Your trip is not transferred."
                     )
-
-                    showConfirmDialog = false })
-
-                {
+                    showConfirmDialog = false
+                }) {
                     Text("Cancel")
                 }
             }
         )
+    }
+
+    // 🔹 Share Sheet (Bottom Modal)
+    if (showShareSheet) {
+        ModalBottomSheet(
+            onDismissRequest = { showShareSheet = false },
+            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+            shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
+            containerColor = Color.White
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text("Share Your UID", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                Spacer(Modifier.height(16.dp))
+
+                Row(
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    fun shareApp(packageName: String, appName: String) {
+                        val intent = Intent(Intent.ACTION_SEND).apply {
+                            type = "text/plain"
+                            setPackage(packageName)
+                            putExtra(Intent.EXTRA_TEXT, "My UID: $currentUserId")
+                        }
+                        try {
+                            context.startActivity(intent)
+                        } catch (e: Exception) {
+                            coroutineScope.launch {
+                                snackbarHostState.showSnackbar("$appName not installed.")
+                            }
+                        }
+                        showShareSheet = false
+                    }
+
+                    IconButton(onClick = { shareApp("com.whatsapp", "WhatsApp") }) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_whatsapp),
+                            contentDescription = "WhatsApp",
+                            tint = Color.Unspecified,
+                            modifier = Modifier.size(48.dp)
+                        )
+                    }
+                    IconButton(onClick = { shareApp("com.facebook.katana", "Facebook") }) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_facebook),
+                            contentDescription = "Facebook",
+                            tint = Color.Unspecified,
+                            modifier = Modifier.size(48.dp)
+                        )
+                    }
+                    IconButton(onClick = { shareApp("com.twitter.android", "X") }) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_x),
+                            contentDescription = "X",
+                            tint = Color.Unspecified,
+                            modifier = Modifier.size(48.dp)
+                        )
+                    }
+                    IconButton(onClick = {
+                        val emailIntent = Intent(Intent.ACTION_SENDTO).apply {
+                            data = Uri.parse("mailto:")
+                            putExtra(Intent.EXTRA_SUBJECT, "My UID")
+                            putExtra(Intent.EXTRA_TEXT, "Here’s my UID: $currentUserId")
+                        }
+                        context.startActivity(emailIntent)
+                        showShareSheet = false
+                    }) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_email),
+                            contentDescription = "Email",
+                            tint = Color.Unspecified,
+                            modifier = Modifier.size(48.dp)
+                        )
+                    }
+                }
+
+                Spacer(Modifier.height(16.dp))
+
+                OutlinedButton(onClick = {
+                    clipboardManager.setText(AnnotatedString(currentUserId))
+                    coroutineScope.launch {
+                        snackbarHostState.showSnackbar("User ID copied!")
+                    }
+                    showShareSheet = false
+                }) {
+                    Text("📋 Copy UID")
+                }
+
+                Spacer(Modifier.height(16.dp))
+            }
+        }
     }
 }

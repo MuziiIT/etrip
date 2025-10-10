@@ -41,6 +41,19 @@ class UserViewModel : ViewModel() {
         }
     }
 
+    init {
+        auth.addAuthStateListener { firebaseAuth ->
+            val user = firebaseAuth.currentUser
+            if (user != null) {
+                loadUserData()
+                listenToActivePass()
+            } else {
+                clearUser()
+            }
+        }
+    }
+
+
     fun loadUserData() {
         val uid = auth.currentUser?.uid ?: return
 
@@ -117,6 +130,8 @@ class UserViewModel : ViewModel() {
                 }
             }
     }
+
+
 
     fun clearUser() {
         _user.value = null

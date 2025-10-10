@@ -26,21 +26,18 @@ class PassViewModel : ViewModel() {
         val repository = PassRepository(context)
         viewModelScope.launch {
             repository.createPayment(amount, passType, userId, { paymentUrl ->
-                // ✅ Once we get the URL, continue as normal
+                // ✅ Only open payment URL now — don't assign yet
                 onUrlReady(paymentUrl)
-
-                // 🔥 After payment starts, immediately assign pass (you may want to do this after verifying payment)
-                assignPassToUser(userId, passType)
             }, onError)
         }
     }
 
+    /** ✅ Call this ONLY after payment confirmation */
     fun assignPassAfterPayment(userId: String, passType: String) {
         assignPassToUser(userId, passType)
     }
 
-
-    fun assignPassToUser(userId: String, passType: String) {
+    private fun assignPassToUser(userId: String, passType: String) {
         val db = FirebaseFirestore.getInstance()
         val passesCollection = db.collection("users").document(userId).collection("passes")
 
@@ -65,17 +62,38 @@ class PassViewModel : ViewModel() {
             "tripsRemaining" to trips
         )
 
-        // Save under a fixed doc name like "daily pass", "weekly pass"
         passesCollection.document("$passType pass")
             .set(newPass)
             .addOnSuccessListener {
                 Log.d("PASS_UPDATE", "Pass assigned: $passType for user: $userId")
+
+                // ✅ Log to history once (after confirmed payment)
+                logPassPurchaseToHistory(userId, passType, trips)
             }
             .addOnFailureListener { e ->
                 Log.e("PASS_UPDATE", "Error assigning pass", e)
             }
     }
 
+    /** ✅ Log successful pass purchases to the user's history */
+    private fun logPassPurchaseToHistory(userId: String, passType: String, trips: Int) {
+        val db = FirebaseFirestore.getInstance()
+        val historyEntry = hashMapOf(
+            "type" to "purchase",
+            "passType" to passType,
+            "tripsAllocated" to trips,
+            "timestamp" to System.currentTimeMillis()
+        )
 
-
+        db.collection("users")
+            .document(userId)
+            .collection("history")
+            .add(historyEntry)
+            .addOnSuccessListener {
+                Log.d("PASS_HISTORY", "Purchase logged successfully for $userId")
+            }
+            .addOnFailureListener { e ->
+                Log.e("PASS_HISTORY", "Failed to log purchase: ${e.message}")
+            }
+    }
 }
