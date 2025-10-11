@@ -1,5 +1,6 @@
-package com.example.etrip1.triptransfer
+/*package com.example.etrip1.triptransfer
 
+import android.content.Intent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -13,30 +14,28 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.painterResource
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.launch
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import com.example.etrip1.R
-import com.example.etrip1.notification.NotificationService
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TransferPassScreen(viewModel: TripTransferViewModel = viewModel()) {
     val coroutineScope = rememberCoroutineScope()
-    val focusManager = LocalFocusManager.current
     val clipboardManager = LocalClipboardManager.current
+    val context = LocalContext.current
 
     val availablePasses by viewModel.availablePasses.collectAsState()
     val transferStatus by viewModel.transferStatus.collectAsState()
@@ -51,139 +50,152 @@ fun TransferPassScreen(viewModel: TripTransferViewModel = viewModel()) {
     var showConfirmDialog by rememberSaveable { mutableStateOf(false) }
 
     val snackbarHostState = remember { SnackbarHostState() }
-    val context = LocalContext.current   // ✅ store context once
+
+    val textFieldColors = outlinedTextFieldColors(
+        focusedBorderColor = Color(0xFFFF7043),
+        unfocusedBorderColor = Color.Gray.copy(alpha = 0.5f),
+        focusedLabelColor = Color(0xFF0D47A1),
+        unfocusedLabelColor = Color.Gray,
+        cursorColor = Color(0xFF0D47A1)
+    )
 
     LaunchedEffect(availablePasses, selectedPass) {
         selectedPassObj = availablePasses.find { it.id == selectedPass }
     }
 
-    Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) }
-    ) { paddingValues ->
-        Column(
+    Scaffold(snackbarHost = { SnackbarHost(snackbarHostState) }) { paddingValues ->
+
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(0xFFF8F9FA))
-                .padding(paddingValues)
-                .padding(16.dp)
-        ) {
-            // 🔹 Logo
-            Image(
-                painter = painterResource(id = R.drawable.logoo),
-                contentDescription = "App Logo",
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .size(60.dp)
-                    .clip(CircleShape)
-                    .shadow(4.dp, CircleShape)
-                    .align(Alignment.Start)
-            )
-
-            // 🔹 User ID with copy
-            if (currentUserId.isNotBlank()) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 12.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column {
-                        Text("Your User ID:", fontWeight = FontWeight.Bold)
-                        Text(
-                            text = currentUserId,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = Color.Gray
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            Color(0xFFE3F2FD),
+                            Color.White
                         )
-                    }
-                    TextButton(onClick = {
-                        clipboardManager.setText(AnnotatedString(currentUserId))
-                        coroutineScope.launch {
-                            snackbarHostState.showSnackbar("User ID copied!")
-                        }
-                    }) {
-                        Text("Copy")
-                    }
-                }
-                Spacer(modifier = Modifier.height(16.dp))
-            }
+                    )
+                )
+                .padding(paddingValues)
+        ) {
+            Column(modifier = Modifier.fillMaxSize()) {
 
-            // 🔹 Available Passes (modern cards kept!)
-            Text(
-                text = "Available Passes",
-                style = MaterialTheme.typography.titleMedium.copy(
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF1565C0),
-                    fontSize = 20.sp
-                ),
-                modifier = Modifier.padding(top = 12.dp, bottom = 12.dp)
-            )
-
-            if (availablePasses.isEmpty()) {
+                // ---------- BANNER ----------
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(24.dp),
-                    contentAlignment = Alignment.Center
+                        .height(180.dp)
                 ) {
-                    Text("No passes available", color = Color.Gray)
+                    Image(
+                        painter = painterResource(id = R.drawable.tranferr),
+                        contentDescription = "Banner",
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color.Black.copy(alpha = 0.4f))
+                    )
+
+                    Column(
+                        modifier = Modifier.align(Alignment.Center),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "eTrip Transfer",
+                            color = Color.White,
+                            fontSize = 28.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "Transfer your passes quickly and safely",
+                            color = Color.White,
+                            fontSize = 14.sp
+                        )
+                    }
                 }
-            } else {
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // ---------- SCROLLABLE CONTENT ----------
                 LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                    contentPadding = PaddingValues(bottom = 12.dp),
-                    modifier = Modifier.weight(1f, fill = false)
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(bottom = 16.dp)
                 ) {
+                    item {
+                        // ---------- USER ID ----------
+                        if (currentUserId.isNotBlank()) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column {
+                                    Text("Your User ID:", fontWeight = FontWeight.Bold)
+                                    Text(currentUserId, color = Color.Gray)
+                                }
+
+                                Row {
+                                    IconButton(onClick = {
+                                        clipboardManager.setText(AnnotatedString(currentUserId))
+                                        coroutineScope.launch {
+                                            snackbarHostState.showSnackbar("User ID copied!")
+                                        }
+                                    }) {
+                                        Icon(Icons.Default.ContentCopy, contentDescription = "Copy")
+                                    }
+                                    IconButton(onClick = {
+                                        val shareIntent = Intent().apply {
+                                            action = Intent.ACTION_SEND
+                                            putExtra(Intent.EXTRA_TEXT, "My eTrip User ID: $currentUserId")
+                                            type = "text/plain"
+                                        }
+                                        context.startActivity(Intent.createChooser(shareIntent, "Share via"))
+                                    }) {
+                                        Icon(Icons.Default.Share, contentDescription = "Share")
+                                    }
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(16.dp))
+                        }
+
+                        // ---------- AVAILABLE PASSES HEADER ----------
+                        Text(
+                            text = "Available Passes",
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF1565C0),
+                            fontSize = 20.sp,
+                            modifier = Modifier.padding(horizontal = 16.dp)
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+
+                    // ---------- AVAILABLE PASS CARDS ----------
                     items(availablePasses) { pass ->
                         Card(
                             modifier = Modifier
                                 .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 8.dp)
                                 .height(100.dp),
                             shape = RoundedCornerShape(16.dp),
-                            elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
-                            colors = CardDefaults.cardColors(containerColor = Color.White)
+                            colors = CardDefaults.cardColors(containerColor = Color(0xFF1976D2))
                         ) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .background(
-                                        brush = Brush.linearGradient(
-                                            colors = listOf(
-                                                Color(0xFF1565C0),
-                                                Color(0xFF1976D2),
-                                            )
-                                        )
-                                    )
-                            ) {
-                                // 🔸 Orange side bar
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxHeight()
-                                        .width(60.dp)
-                                        .background(
-                                            brush = Brush.verticalGradient(
-                                                colors = listOf(
-                                                    Color(0xFFFF9800),
-                                                    Color(0xFFFFB74D),
-                                                )
-                                            ),
-                                            shape = RoundedCornerShape(
-                                                topStart = 0.dp,
-                                                bottomStart = 0.dp,
-                                                topEnd = 16.dp,
-                                                bottomEnd = 16.dp
-                                            )
-                                        )
-                                        .align(Alignment.CenterEnd)
-                                )
+                            Box(modifier = Modifier.fillMaxSize()) {
 
                                 Row(
                                     modifier = Modifier
                                         .fillMaxSize()
-                                        .padding(16.dp),
+                                        .padding(start = 16.dp, end = 16.dp),
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
+
+                                    // ---------- Text Info ----------
                                     Column {
                                         Text(
                                             text = pass.type.uppercase(),
@@ -197,148 +209,170 @@ fun TransferPassScreen(viewModel: TripTransferViewModel = viewModel()) {
                                         )
                                     }
 
-                                    Box(
-                                        contentAlignment = Alignment.Center,
-                                        modifier = Modifier
-                                            .size(55.dp)
-                                            .background(
-                                                color = Color(0xFFFF9800),
-                                                shape = RoundedCornerShape(27.5.dp)
-                                            )
+                                    // ---------- Right Side: Orange Circle + Orange Strip ----------
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically
                                     ) {
-                                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                            Text(
-                                                text = pass.tripsRemaining.toString(),
-                                                color = Color.White,
-                                                fontWeight = FontWeight.ExtraBold,
-                                                fontSize = 18.sp
-                                            )
-                                            Text(
-                                                text = "trips",
-                                                color = Color.White,
-                                                fontSize = 8.sp
-                                            )
+                                        // Orange Circle
+                                        Box(
+                                            contentAlignment = Alignment.Center,
+                                            modifier = Modifier
+                                                .size(55.dp)
+                                                .background(
+                                                    color = Color(0xFFFF7043),
+                                                    shape = CircleShape
+                                                )
+                                        ) {
+                                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                                Text(
+                                                    text = pass.tripsRemaining.toString(),
+                                                    color = Color.White,
+                                                    fontWeight = FontWeight.ExtraBold,
+                                                    fontSize = 18.sp
+                                                )
+                                                Text(
+                                                    text = "trips",
+                                                    color = Color.White,
+                                                    fontSize = 8.sp
+                                                )
+                                            }
                                         }
+
+                                        Spacer(modifier = Modifier.width(8.dp))
+
+                                        // Orange Strip
+                                        Box(
+                                            modifier = Modifier
+                                                .width(10.dp)
+                                                .fillMaxHeight()
+                                                .background(Color(0xFFFF7043))
+                                        )
                                     }
                                 }
                             }
                         }
                     }
-                }
-            }
 
-            // 🔹 Transfer Form
-            Spacer(modifier = Modifier.height(20.dp))
-            Text(
-                "Transfer Pass",
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF1565C0),
-                fontSize = 20.sp
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-
-            ExposedDropdownMenuBox(
-                expanded = dropdownExpanded,
-                onExpandedChange = { dropdownExpanded = !dropdownExpanded }
-            ) {
-                TextField(
-                    value = selectedPassObj?.type ?: "Select a pass",
-                    onValueChange = {},
-                    readOnly = true,
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = dropdownExpanded) },
-                    modifier = Modifier
-                        .menuAnchor()
-                        .fillMaxWidth(),
-                    label = { Text("Choose Pass") },
-                    colors = outlinedTextFieldColors(
-                        focusedBorderColor = Color(0xFF1565C0),
-                        unfocusedBorderColor = Color.Gray.copy(alpha = 0.5f)
-                    )
-                )
-
-                ExposedDropdownMenu(
-                    expanded = dropdownExpanded,
-                    onDismissRequest = { dropdownExpanded = false }
-                ) {
-                    availablePasses.forEach { pass ->
-                        DropdownMenuItem(
-                            text = { Text("${pass.type} (${pass.tripsRemaining} trips)") },
-                            onClick = {
-                                selectedPass = pass.id
-                                selectedPassObj = pass
-                                dropdownExpanded = false
-                            }
+                    item {
+                        // ---------- TRANSFER FORM ----------
+                        Spacer(modifier = Modifier.height(20.dp))
+                        Text(
+                            "Transfer Pass",
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF1565C0),
+                            fontSize = 20.sp,
+                            modifier = Modifier.padding(horizontal = 16.dp)
                         )
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        ExposedDropdownMenuBox(
+                            expanded = dropdownExpanded,
+                            onExpandedChange = { dropdownExpanded = !dropdownExpanded },
+                            modifier = Modifier.padding(horizontal = 16.dp)
+                        ) {
+                            TextField(
+                                value = selectedPassObj?.type ?: "Select a pass",
+                                onValueChange = {},
+                                readOnly = true,
+                                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = dropdownExpanded) },
+                                modifier = Modifier.fillMaxWidth(),
+                                label = { Text("Choose Pass", color = Color(0xFF0D47A1)) },
+                                colors = textFieldColors
+                            )
+
+                            ExposedDropdownMenu(
+                                expanded = dropdownExpanded,
+                                onDismissRequest = { dropdownExpanded = false }
+                            ) {
+                                availablePasses.forEach { pass ->
+                                    DropdownMenuItem(
+                                        text = { Text("${pass.type} (${pass.tripsRemaining} trips)", color = Color(0xFF0D47A1)) },
+                                        onClick = {
+                                            selectedPass = pass.id
+                                            selectedPassObj = pass
+                                            dropdownExpanded = false
+                                        }
+                                    )
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        OutlinedTextField(
+                            value = recipient,
+                            onValueChange = { recipient = it },
+                            label = { Text("Recipient User ID (UID only)") },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp),
+                            singleLine = true,
+                            colors = textFieldColors
+                        )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        OutlinedTextField(
+                            value = tripsToTransfer,
+                            onValueChange = { tripsToTransfer = it.filter { ch -> ch.isDigit() } },
+                            label = { Text("Number of Trips to Transfer") },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp),
+                            singleLine = true,
+                            colors = textFieldColors
+                        )
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Button(
+                            onClick = { showConfirmDialog = true },
+                            enabled = recipient.isNotBlank() && selectedPassObj != null &&
+                                    tripsToTransfer.toIntOrNull()?.let {
+                                        it > 0 && it <= (selectedPassObj?.tripsRemaining ?: 0)
+                                    } == true && !isSubmitting,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp)
+                                .height(50.dp),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFF1565C0),
+                                contentColor = Color.White
+                            )
+                        ) {
+                            if (isSubmitting) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(20.dp),
+                                    strokeWidth = 2.dp,
+                                    color = Color.White
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Sending...")
+                            } else {
+                                Text("Transfer Now", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                            }
+                        }
+
+                        transferStatus?.let {
+                            Spacer(Modifier.height(12.dp))
+                            Text(
+                                text = it,
+                                fontWeight = FontWeight.Bold,
+                                color = if (it.contains("success", true) || it.contains("created", true))
+                                    Color(0xFF2E7D32) else Color.Red,
+                                modifier = Modifier.padding(horizontal = 16.dp)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(24.dp))
                     }
                 }
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            OutlinedTextField(
-                value = recipient,
-                onValueChange = { recipient = it },
-                label = { Text("Recipient User ID (UID only)") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            OutlinedTextField(
-                value = tripsToTransfer,
-                onValueChange = { tripsToTransfer = it.filter { ch -> ch.isDigit() } },
-                label = { Text("Number of Trips to Transfer") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Button(
-                onClick = {
-                    focusManager.clearFocus(true)
-                    showConfirmDialog = true
-                },
-                enabled = recipient.isNotBlank() && selectedPassObj != null &&
-                        tripsToTransfer.toIntOrNull()?.let {
-                            it > 0 && it <= (selectedPassObj?.tripsRemaining ?: 0)
-                        } == true && !isSubmitting,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF1565C0),
-                    contentColor = Color.White
-                )
-            ) {
-                if (isSubmitting) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(20.dp),
-                        strokeWidth = 2.dp,
-                        color = Color.White
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Sending...")
-                } else {
-                    Text("Transfer Now", fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                }
-            }
-
-            transferStatus?.let {
-                Spacer(Modifier.height(12.dp))
-                Text(
-                    text = it,
-                    fontWeight = FontWeight.Bold,
-                    color = if (it.contains("success", true) || it.contains("created", true))
-                        Color(0xFF2E7D32) else Color.Red
-                )
             }
         }
     }
 
-    // 🔹 Confirm Transfer Dialog
+    // ---------- Confirm Transfer Dialog ----------
     if (showConfirmDialog && selectedPassObj != null) {
         val tripsInt = tripsToTransfer.toIntOrNull() ?: 0
         AlertDialog(
@@ -354,35 +388,17 @@ fun TransferPassScreen(viewModel: TripTransferViewModel = viewModel()) {
                             passId = selectedPassObj!!.id,
                             trips = tripsInt
                         )
-
-                        // 🚀 Show notification immediately after transfer
-                        NotificationService.showNotification(
-                            context = context,
-                            title = "Trip Transferred",
-                            message = "Your trip is successfully transferred."
-                        )
-
                     }
                 }) {
                     Text("Confirm")
                 }
             },
             dismissButton = {
-                TextButton(onClick = {
-//show notification
-
-                    NotificationService.showNotification(
-                        context = context,
-                        title = "Trip Transfer Cancelled",
-                        message = "Your trip  is not transferred."
-                    )
-
-                    showConfirmDialog = false })
-
-                {
+                TextButton(onClick = { showConfirmDialog = false }) {
                     Text("Cancel")
                 }
             }
         )
     }
 }
+*\

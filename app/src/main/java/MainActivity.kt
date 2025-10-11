@@ -1,4 +1,4 @@
-package com.example.etrip1
+ package com.example.etrip1
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity

@@ -2,41 +2,28 @@ package com.example.etrip1.qrcode
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.etrip1.R
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun QrCodeScreen() {
     val viewModel: QrCodeViewModel = viewModel()
@@ -44,129 +31,214 @@ fun QrCodeScreen() {
     val selectedPass by viewModel.selectedPass.collectAsState()
     val qrCodeBitmap by viewModel.qrCodeBitmap.collectAsState()
 
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp)
-            .background(Color(0xFFF8F9FA)), // Light blue-gray background
-        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(
-            text = "Your Ticket",
-            style = MaterialTheme.typography.headlineMedium.copy(
-                color = Color(0xFF1565C0), // Blue text
-                fontWeight = FontWeight.Bold
-            ),
-            modifier = Modifier.padding(bottom = 16.dp)
+        // Full screen background image without excessive zooming
+        Image(
+            painter = painterResource(id = R.drawable.qrcode), // Use your background image
+            contentDescription = "Background",
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Fit // Changed to Fit to prevent excessive zooming/stretching
         )
 
-        if (userPasses.isEmpty()) {
-            Card(
+        // Semi-transparent overlay for better readability
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.4f))
+        )
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // Header Section
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
-                shape = RoundedCornerShape(12.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = Color.White
-                )
+                    .padding(vertical = 24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "No active passes. Purchase a pass to generate a ticket.",
-                    modifier = Modifier.padding(24.dp),
-                    color = Color(0xFF1565C0), // Blue text
-                    style = MaterialTheme.typography.bodyMedium
+                    text = "Your Ticket",
+                    fontSize = 32.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White,
+                    textAlign = TextAlign.Center
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "Scan this when boarding the bus",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = Color.White.copy(alpha = 0.9f),
+                    textAlign = TextAlign.Center
                 )
             }
-        } else {
-            // Pass selector
-            PassSelector(
-                passes = userPasses,
-                selectedPass = selectedPass,
-                onPassSelected = { viewModel.selectPass(it) }
-            )
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-            // QR code display
-            if (qrCodeBitmap != null) {
+            if (userPasses.isEmpty()) {
                 Card(
-                    modifier = Modifier.size(280.dp),
-                    shape = RoundedCornerShape(20.dp),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = Color.White
-                    )
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.95f)),
+                    elevation = CardDefaults.cardElevation(6.dp)
                 ) {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
+                    Text(
+                        text = "No active passes. Purchase a pass to generate a ticket.",
+                        modifier = Modifier.padding(24.dp),
+                        color = Color(0xFF1565C0),
+                        style = MaterialTheme.typography.bodyMedium,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            } else {
+                // Pass Selector Card
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.95f)),
+                    elevation = CardDefaults.cardElevation(6.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp)
                     ) {
-                        Image(
-                            bitmap = qrCodeBitmap!!.asImageBitmap(),
-                            contentDescription = "QR Code",
-                            modifier = Modifier.size(250.dp)
+                        Text(
+                            text = "Select Your Pass",
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                color = Color(0xFF0D47A1),
+                                fontWeight = FontWeight.Bold
+                            ),
+                            modifier = Modifier.padding(bottom = 12.dp)
+                        )
+                        PassSelector(
+                            passes = userPasses,
+                            selectedPass = selectedPass,
+                            onPassSelected = { viewModel.selectPass(it) }
                         )
                     }
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                Text(
-                    text = "Show this code to the driver when boarding",
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        color = Color(0xFF1565C0), // Blue text
-                        fontWeight = FontWeight.Medium
-                    )
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                selectedPass?.let { pass ->
+                if (qrCodeBitmap != null) {
+                    // QR Code Card
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 32.dp),
-                        shape = RoundedCornerShape(12.dp),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = Color(0xFF1565C0) // Blue background
-                        )
+                            .padding(horizontal = 16.dp),
+                        shape = RoundedCornerShape(20.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.95f)),
+                        elevation = CardDefaults.cardElevation(8.dp)
                     ) {
                         Column(
-                            modifier = Modifier.padding(16.dp),
+                            modifier = Modifier.padding(24.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             Text(
-                                text = "${pass.type.replaceFirstChar { it.uppercase() }} Pass",
+                                text = "Scan QR Code",
                                 style = MaterialTheme.typography.titleMedium.copy(
-                                    color = Color.White,
+                                    color = Color(0xFF0D47A1),
                                     fontWeight = FontWeight.Bold
-                                )
+                                ),
+                                modifier = Modifier.padding(bottom = 16.dp)
                             )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = "${pass.tripsRemaining} trips remaining",
-                                style = MaterialTheme.typography.bodyLarge.copy(
-                                    color = Color(0xFFFF9800), // Orange text
-                                    fontWeight = FontWeight.Bold
-                                )
+
+                            Image(
+                                bitmap = qrCodeBitmap!!.asImageBitmap(),
+                                contentDescription = "QR Code",
+                                modifier = Modifier.size(240.dp)
                             )
                         }
                     }
-                }
-            } else {
-                Box(
-                    modifier = Modifier.size(120.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator(
-                        color = Color(0xFFFF9800), // Orange progress indicator
-                        strokeWidth = 4.dp,
-                        modifier = Modifier.size(50.dp)
-                    )
+
+                    Spacer(modifier = Modifier.height(20.dp))
+
+                    selectedPass?.let { pass ->
+                        // Pass Info Card
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(containerColor = Color(0xFF1565C0).copy(alpha = 0.9f)),
+                            elevation = CardDefaults.cardElevation(4.dp)
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(20.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(
+                                    text = "${pass.type.replaceFirstChar { it.uppercase() }} Pass",
+                                    style = MaterialTheme.typography.titleMedium.copy(
+                                        color = Color.White,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text = "${pass.tripsRemaining} trips remaining",
+                                    style = MaterialTheme.typography.bodyLarge.copy(
+                                        color = Color(0xFFFFC107),
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = "Valid until boarding",
+                                    style = MaterialTheme.typography.bodySmall.copy(
+                                        color = Color.White.copy(alpha = 0.8f)
+                                    )
+                                )
+                            }
+                        }
+                    }
+                } else {
+                    // Loading Card
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.95f)),
+                        elevation = CardDefaults.cardElevation(6.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(120.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                CircularProgressIndicator(
+                                    color = Color(0xFFFF7043),
+                                    strokeWidth = 4.dp,
+                                    modifier = Modifier.size(40.dp)
+                                )
+                                Spacer(modifier = Modifier.height(12.dp))
+                                Text(
+                                    text = "Generating QR Code...",
+                                    color = Color(0xFF0D47A1),
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                        }
+                    }
                 }
             }
+
+            Spacer(modifier = Modifier.height(32.dp))
         }
     }
 }
@@ -180,31 +252,35 @@ fun PassSelector(
     var expanded by remember { mutableStateOf(false) }
 
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color.White
-        )
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(2.dp)
     ) {
         Box(modifier = Modifier.fillMaxWidth()) {
             OutlinedButton(
                 onClick = { expanded = true },
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.outlinedButtonColors(
-                    containerColor = Color.White,
-                    contentColor = Color(0xFF1565C0) // Blue text
+                    containerColor = Color.Transparent,
+                    contentColor = Color(0xFF0D47A1)
                 ),
                 border = null
             ) {
                 Text(
-                    selectedPass?.type?.replaceFirstChar { it.uppercase() } ?: "Select Pass",
-                    fontWeight = FontWeight.Medium
+                    selectedPass?.let {
+                        "${it.type.replaceFirstChar { char -> char.uppercase() }} (${it.tripsRemaining} trips)"
+                    } ?: "Select Pass",
+                    fontWeight = FontWeight.Medium,
+                    fontSize = 16.sp
                 )
+                Spacer(modifier = Modifier.width(8.dp))
                 Icon(
                     imageVector = Icons.Filled.ArrowDropDown,
                     contentDescription = "Select pass",
-                    tint = Color(0xFFFF9800) // Orange icon
+                    tint = Color(0xFFFF7043),
+                    modifier = Modifier.size(24.dp)
                 )
             }
 
@@ -218,7 +294,9 @@ fun PassSelector(
                         text = {
                             Text(
                                 "${pass.type.replaceFirstChar { it.uppercase() }} (${pass.tripsRemaining} trips)",
-                                color = Color(0xFF1565C0) // Blue text
+                                color = Color(0xFF0D47A1),
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Medium
                             )
                         },
                         onClick = {
