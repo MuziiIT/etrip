@@ -1,10 +1,12 @@
 package viewmodel
 
 import androidx.lifecycle.ViewModel
-import com.google.firebase.auth.FirebaseAuth
+import androidx.lifecycle.viewModelScope
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 import model.User
 
 class UserViewModel : ViewModel() {
@@ -18,16 +20,10 @@ class UserViewModel : ViewModel() {
     private val _loading = MutableStateFlow(false)
     val loading: StateFlow<Boolean> get() = _loading
 
-    private val _tripsRemaining = MutableStateFlow<Int?>(null)
-    val tripsRemaining: StateFlow<Int?> get() = _tripsRemaining
-
-    private val _activePassType = MutableStateFlow<String?>(null)
-    val activePassType: StateFlow<String?> get() = _activePassType
-
+    // ✅ Step 1: init block to auto-load user data
     init {
         if (auth.currentUser != null) {
             loadUserData()
-            listenToActivePass()
         }
     }
 
@@ -49,57 +45,7 @@ class UserViewModel : ViewModel() {
             }
     }
 
-    private fun listenToActivePass() {
-        val uid = auth.currentUser?.uid ?: return
-
-        db.collection("users").document(uid)
-            .collection("passes")
-            .addSnapshotListener { snapshots, error ->
-                if (error != null) {
-                    println("Error fetching passes: ${error.message}")
-                    return@addSnapshotListener
-                }
-
-                var activeTrips: Int? = null
-                var activeType: String? = null
-                var latestExpiry: Long = 0
-
-                val now = System.currentTimeMillis()
-
-                if (snapshots != null && !snapshots.isEmpty) {
-                    for (doc in snapshots.documents) {
-                        val validUntil = doc.getLong("validUntil") ?: 0
-                        val trips = doc.getLong("tripsRemaining")?.toInt() ?: 0
-                        val type = doc.getString("type")
-
-                        if (validUntil > now) {
-                            // ✅ Still valid: check if it should be the active one
-                            if (validUntil > latestExpiry) {
-                                latestExpiry = validUntil
-                                activeTrips = trips
-                                activeType = type
-                            }
-                        } else {
-                            // ❌ Expired: delete from Firestore
-                            doc.reference.delete()
-                                .addOnSuccessListener {
-                                    println("Expired pass '${doc.id}' deleted for user $uid")
-                                }
-                                .addOnFailureListener { e ->
-                                    println("Error deleting expired pass: ${e.message}")
-                                }
-                        }
-                    }
-                }
-
-                _tripsRemaining.value = activeTrips
-                _activePassType.value = activeType
-            }
-    }
-
     fun clearUser() {
         _user.value = null
-        _tripsRemaining.value = null
-        _activePassType.value = null
     }
 }
