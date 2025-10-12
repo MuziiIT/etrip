@@ -1,4 +1,4 @@
-plugins {
+   plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
@@ -45,6 +45,10 @@ android {
         compose = true
     }
 
+    composeOptions {
+        kotlinCompilerExtensionVersion = "1.5.0"
+    }
+
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
@@ -53,6 +57,7 @@ android {
 }
 
 dependencies {
+    // AndroidX
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -61,22 +66,38 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+    implementation(libs.androidx.navigation.compose)
+    implementation(libs.androidx.appcompat)
+    implementation(libs.androidx.credentials)
+    implementation(libs.androidx.credentials.play.services.auth)
 
-    // ✅ Firebase BOM handles versions
+    // Material Icons Extended
+    implementation("androidx.compose.material:material-icons-extended:1.7.0") // keep latest
+
+    // Firebase
     implementation(platform("com.google.firebase:firebase-bom:33.1.2"))
     implementation("com.google.firebase:firebase-auth-ktx")
     implementation("com.google.firebase:firebase-firestore-ktx")
-    implementation ("com.google.firebase:firebase-messaging-ktx")
+    implementation("com.google.firebase:firebase-messaging-ktx")
 
-    implementation(libs.androidx.credentials)
-    implementation(libs.androidx.credentials.play.services.auth)
+    // Google Sign-In
     implementation(libs.googleid)
-    implementation(libs.androidx.navigation.compose)
-    implementation(libs.androidx.appcompat)
+
+    // Networking
     implementation(libs.volley)
     implementation(libs.ui)
 
+    // QR Code
+    implementation("com.google.zxing:core:3.5.2")
+    implementation("com.journeyapps:zxing-android-embedded:4.3.0")
 
+    // Accompanist
+    implementation("com.google.accompanist:accompanist-permissions:0.35.1-alpha")
+
+    // Material
+    implementation(libs.material)
+
+    // Testing
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -84,6 +105,7 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+
 
     implementation("com.google.zxing:core:3.5.2")
     implementation("com.journeyapps:zxing-android-embedded:4.3.0")

@@ -155,11 +155,12 @@ fun TransferPassScreen(viewModel: TripTransferViewModel = viewModel()) {
                                         brush = Brush.linearGradient(
                                             colors = listOf(
                                                 Color(0xFF1565C0),
-                                                Color(0xFF1976D2),
+                                                Color(0xFF1976D2)
                                             )
                                         )
                                     )
                             ) {
+                                // Orange side bar
                                 Box(
                                     modifier = Modifier
                                         .fillMaxHeight()
@@ -168,7 +169,7 @@ fun TransferPassScreen(viewModel: TripTransferViewModel = viewModel()) {
                                             brush = Brush.verticalGradient(
                                                 colors = listOf(
                                                     Color(0xFFFF9800),
-                                                    Color(0xFFFFB74D),
+                                                    Color(0xFFFFB74D)
                                                 )
                                             ),
                                             shape = RoundedCornerShape(
@@ -384,7 +385,7 @@ fun TransferPassScreen(viewModel: TripTransferViewModel = viewModel()) {
         )
     }
 
-    // 🔹 Share Sheet (Bottom Modal)
+    // 🔹 Share Sheet Modal (Modern Styling)
     if (showShareSheet) {
         ModalBottomSheet(
             onDismissRequest = { showShareSheet = false },
