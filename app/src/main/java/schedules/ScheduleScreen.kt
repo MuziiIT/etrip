@@ -26,6 +26,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.etrip1.R
@@ -67,47 +68,52 @@ fun ScheduleScreen(userName: String) {
         }
     }
 
+    // Define the color palette
+    val primaryBlue = Color(0xFF1E88E5)      // Main Blue
+    val accentOrange = Color(0xFFFF7043)    // Main Orange
+    val cardBackground = Color(0xFFF0E5F5)  // Light lilac/purple for cards
+    val darkText = Color(0xFF333333)
+
+    // New gradient colors
+    val lightBlue = Color(0xFFFF9043) // Light Blue mid-point
+
+    // Define the Integrated Gradient Brush: Orange -> Light Blue -> Blue
+    val integratedGradientBrush = Brush.verticalGradient(
+        colors = listOf(
+            accentOrange,    // Starts with Orange (0xFFFF7043)
+            lightBlue,       // Transitions through Light Blue (0xFF81D4FA)
+            primaryBlue      // Ends with Blue (0xFF1E88E5)
+        ),
+        // Extend the blend significantly down the screen
+        endY = 2000f
+    )
+
     val nextBus = filteredSchedules.minByOrNull { calculateTimeDifference(currentTime, it.departureTime) }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(scrollState)
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(Color(0xFFE3F2FD), Color.White)
-                )
-            )
+            .background(brush =integratedGradientBrush)
+
+
     ) {
         // ---------- Banner ----------
-        Box(modifier = Modifier.fillMaxWidth().height(220.dp)) {
+        Box(modifier = Modifier.fillMaxWidth()) {
             Image(
-                painter = painterResource(id = R.drawable.schedules),
-                contentDescription = "Banner",
-                modifier = Modifier.fillMaxSize(),
+                painter = painterResource(id = R.drawable.schedule),
+                contentDescription = null, // decorative element
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(380.dp) // Height for the illustration
+                    .align(Alignment.TopCenter),
                 contentScale = ContentScale.Crop
             )
-            Box(modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.5f)))
-
             Column(
                 modifier = Modifier.align(Alignment.Center).padding(horizontal = 16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(
-                    "Schedule",
-                    fontSize = 36.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    "Wanna know when your next bus is?\nWe got you covered.",
-                    style = MaterialTheme.typography.bodyLarge.copy(
-                        color = Color.White,
-                        fontWeight = FontWeight.Medium
-                    ),
-                    textAlign = TextAlign.Center
-                )
+
             }
         }
 
@@ -175,7 +181,7 @@ fun ScheduleScreen(userName: String) {
                 if (nextBus != null) {
                     Text(
                         "Next Bus: ${nextBus.busNumber} • ${nextBus.departure} ➜ ${nextBus.destination} at ${nextBus.departureTime}",
-                        color = Color.White,
+                        color = Color.Yellow,
                         fontWeight = FontWeight.SemiBold
                     )
                 } else {
@@ -292,4 +298,14 @@ fun calculateTimeDifference(currentTime: String, departureTime: String): Long {
     } catch (e: Exception) { Long.MAX_VALUE }
 }
 
-
+@Composable
+@Preview(
+    showBackground = true,
+    showSystemUi = true,
+    name = "Schedule Screen Preview"
+)
+fun ScheduleScreenPreview() {
+    MaterialTheme {
+        ScheduleScreen(userName = "Nelisa")
+    }
+}

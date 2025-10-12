@@ -12,12 +12,14 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -31,56 +33,55 @@ fun QrCodeScreen() {
     val selectedPass by viewModel.selectedPass.collectAsState()
     val qrCodeBitmap by viewModel.qrCodeBitmap.collectAsState()
 
+    // Define the color palette
+    val primaryBlue = Color(0xFF1E88E5)      // Main Blue
+    val accentOrange = Color(0xFFFF7043)    // Main Orange
+    val cardBackground = Color(0xFFF0E5F5)  // Light lilac/purple for cards
+    val darkText = Color(0xFF333333)
+
+    // New gradient colors
+    val lightBlue = Color(0xFFFF9043) // Light Blue mid-point
+
+    // Define the Integrated Gradient Brush: Orange -> Light Blue -> Blue
+    val integratedGradientBrush = Brush.verticalGradient(
+        colors = listOf(
+            accentOrange,    // Starts with Orange (0xFFFF7043)
+            lightBlue,       // Transitions through Light Blue (0xFF81D4FA)
+            primaryBlue      // Ends with Blue (0xFF1E88E5)
+        ),
+        // Extend the blend significantly down the screen
+        endY = 2000f
+    )
+
     Box(
         modifier = Modifier
             .fillMaxSize()
+            .background(brush = integratedGradientBrush)
     ) {
         // Full screen background image without excessive zooming
         Image(
-            painter = painterResource(id = R.drawable.qrcode), // Use your background image
-            contentDescription = "Background",
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Fit // Changed to Fit to prevent excessive zooming/stretching
-        )
-
-        // Semi-transparent overlay for better readability
-        Box(
+            painter = painterResource(id = R.drawable.qrcode),
+            contentDescription = null, // decorative element
             modifier = Modifier
-                .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.4f))
+                .fillMaxWidth()
+                .height(320.dp) // Height for the illustration
+                .align(Alignment.TopCenter),
+            contentScale = ContentScale.Crop
         )
+        // Semi-transparent overlay for better readability
+
 
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState()),
+                .verticalScroll(rememberScrollState())
+                .padding(vertical = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Header Section
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = "Your Ticket",
-                    fontSize = 32.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White,
-                    textAlign = TextAlign.Center
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "Scan this when boarding the bus",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = Color.White.copy(alpha = 0.9f),
-                    textAlign = TextAlign.Center
-                )
-            }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            // Spacer to push the card down (Adjust this height to center the card over the bus area)
+            Spacer(modifier = Modifier.height(40.dp))
+
 
             if (userPasses.isEmpty()) {
                 Card(
@@ -99,23 +100,27 @@ fun QrCodeScreen() {
                         textAlign = TextAlign.Center
                     )
                 }
-            } else {
+
+                Spacer(modifier = Modifier.height(30.dp))
+            }else {
                 // Pass Selector Card
+                Spacer(modifier = Modifier.height(30.dp))
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp),
                     shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.95f)),
+                    colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.15f)),
                     elevation = CardDefaults.cardElevation(6.dp)
                 ) {
                     Column(
-                        modifier = Modifier.padding(16.dp)
-                    ) {
+                        modifier = Modifier.padding(16.dp),
+
+                        ) {
                         Text(
                             text = "Select Your Pass",
                             style = MaterialTheme.typography.titleMedium.copy(
-                                color = Color(0xFF0D47A1),
+                                color = Color(0xFFFF9800),
                                 fontWeight = FontWeight.Bold
                             ),
                             modifier = Modifier.padding(bottom = 12.dp)
@@ -137,7 +142,7 @@ fun QrCodeScreen() {
                             .fillMaxWidth()
                             .padding(horizontal = 16.dp),
                         shape = RoundedCornerShape(20.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.95f)),
+                        colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.15f)),
                         elevation = CardDefaults.cardElevation(8.dp)
                     ) {
                         Column(
@@ -156,7 +161,8 @@ fun QrCodeScreen() {
                             Image(
                                 bitmap = qrCodeBitmap!!.asImageBitmap(),
                                 contentDescription = "QR Code",
-                                modifier = Modifier.size(240.dp)
+                                modifier = Modifier.size(240.dp),
+                                Alignment.Center
                             )
                         }
                     }

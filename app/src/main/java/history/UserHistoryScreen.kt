@@ -20,9 +20,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.etrip1.R
 import java.text.SimpleDateFormat
@@ -36,90 +35,68 @@ fun UserHistoryScreen(viewModel: UserHistoryViewModel = viewModel()) {
     val history by viewModel.history.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
 
+    // Gradient background: Orange -> Light Blue -> Blue
+    val integratedGradientBrush = Brush.verticalGradient(
+        colors = listOf(Color(0xFFFF7043), Color(0xFFFF9043), Color(0xFF1E88E5)),
+        endY = 2000f
+    )
+
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(
-                        Color(0xFFE3F2FD), // Soft blue
-                        Color.White
-                    )
-                )
-            )
+            .background(integratedGradientBrush)
     ) {
-        // ---------- BANNER ----------
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(200.dp)
-        ) {
+        // ---------- Banner ----------
+        Box(modifier = Modifier.fillMaxWidth()) {
             Image(
                 painter = painterResource(id = R.drawable.history),
-                contentDescription = "Banner",
-                modifier = Modifier.fillMaxSize(),
+                contentDescription = "History Banner",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(380.dp),
                 contentScale = ContentScale.Crop
             )
-
-            // Dark overlay
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.3f))
-            )
-
-            Column(
-                modifier = Modifier.align(Alignment.Center),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = "My History",
-                    fontSize = 32.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "Review all your past trips and transactions",
-                    color = Color.White,
-                    fontWeight = FontWeight.Medium,
-                    textAlign = TextAlign.Center
-                )
-            }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
         // ---------- CONTENT ----------
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 16.dp)
-        ) {
-            when {
-                isLoading -> {
-                    Column(
-                        modifier = Modifier.fillMaxSize(),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
-                    ) {
-                        CircularProgressIndicator(color = Color(0xFF1565C0))
-                        Spacer(Modifier.height(8.dp))
-                        Text("Loading your history...")
+        when {
+            isLoading -> {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        CircularProgressIndicator(color = Color.White)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text("Loading your history...", color = Color.White)
                     }
                 }
+            }
 
-                history.isEmpty() -> {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("No history yet", style = MaterialTheme.typography.bodyLarge)
-                    }
+            history.isEmpty() -> {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        "No history yet",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = Color.White
+                    )
                 }
+            }
 
-                else -> {
-                    LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        items(history) { item ->
-                            HistoryCard(item)
-                        }
+            else -> {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(history) { item ->
+                        HistoryCard(item)
                     }
                 }
             }
@@ -135,12 +112,8 @@ fun HistoryCard(item: UserHistoryItem) {
         else -> Icons.Default.Star
     }
 
-    // Solid colors based on type
-    val backgroundColor = when (item.type) {
-        "purchase" -> Color(0xFF1976D2) // Orange
-        "ride" -> Color(0xFFFF7043) // Blue
-        else -> Color(0xFFE0E0E0) // Light gray
-    }
+    // Orange background for all history cards
+    val backgroundColor = Color(0xFF2196F3)
 
     Card(
         colors = CardDefaults.cardColors(containerColor = backgroundColor),
@@ -149,14 +122,10 @@ fun HistoryCard(item: UserHistoryItem) {
             .fillMaxWidth()
             .shadow(4.dp, RoundedCornerShape(12.dp))
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-        ) {
+        Column(modifier = Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(icon, contentDescription = null, tint = Color.White)
-                Spacer(Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     item.type.replaceFirstChar { it.uppercase() },
                     fontWeight = FontWeight.Bold,
@@ -186,3 +155,15 @@ fun HistoryCard(item: UserHistoryItem) {
 
 private fun Long.toFormattedDate(): String =
     SimpleDateFormat("dd MMM yyyy, HH:mm", Locale.getDefault()).format(Date(this))
+
+@Preview(
+    showBackground = true,
+    showSystemUi = true,
+    name = "User History Screen Preview"
+)
+@Composable
+fun UserHistoryScreenPreview() {
+    MaterialTheme {
+        UserHistoryScreen()
+    }
+}
